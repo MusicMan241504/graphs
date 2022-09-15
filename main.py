@@ -2,7 +2,14 @@ import matplotlib.pyplot as plt
 import matplotlib
 import csv
 import numpy as np
-from scipy.interpolate import make_interp_spline, BSpline
+from scipy import interpolate
+
+
+def gradient(tck, x):
+    dydx = interpolate.splev(x, tck, der=1)
+    return dydx
+
+
 with open('data.csv') as file:
     r = csv.reader(file,delimiter=',')
     time = []
@@ -26,22 +33,50 @@ with open('data.csv') as file:
 
 time_ = np.linspace(min(time), max(time), 500)
 
-v2spli = make_interp_spline(time, volume2, k=5)
-v2_ = v2spli(time_)
-v1spli = make_interp_spline(time, volume1, k=5)
-v1_ = v1spli(time_)
-v05spli = make_interp_spline(time, volume05, k=5)
-v05_ = v05spli(time_)
 
+v2tck = interpolate.splrep(time, volume2, s=3)
+v2_ = interpolate.splev(time_, v2tck, der=0)
+
+v1tck = interpolate.splrep(time, volume1, s=3)
+v1_ = interpolate.splev(time_, v1tck, der=0)
+
+v05tck = interpolate.splrep(time, volume05, s=3)
+v05_ = interpolate.splev(time_, v05tck, der=0)
+
+
+v2grad = gradient(v2tck, 0)
+v1grad = gradient(v1tck, 0)
+v05grad = gradient(v05tck, 0)
+
+'''
+concentration = input("Enter the concentration you want to get the gradient of: (2 / 1 / 0.5)")
+x = float(input("Enter time value to get gradient at: "))
+
+if concentration == "2":
+    grad = gradient(v2tck, x)
+    print("Concentration: " + concentration + " Time: " + str(x) + " Gradient: " + str(grad))
+elif concentration == "1":
+    grad = gradient(v1tck, x)
+    print("Concentration: " + concentration + " Time: " + str(x) + " Gradient: " + str(grad))
+elif concentration == "0.5":
+    grad = gradient(v05tck, x)
+    print("Concentration: " + concentration + " Time: " + str(x) + " Gradient: " + str(grad))
+'''
 
 plt.plot(time_, v2_, 'g')
 plt.plot(time_, v1_, 'b')
 plt.plot(time_, v05_, 'r')
 plt.xlabel(xLabel)
-plt.ylabel("Volume gas produced /cm^3")
+plt.ylabel("Volume of gas produced /cm\u00b3")
 plt.title('Rate of Reaction of Mg and HCl')
-plt.legend([v2Label, v1Label, v05Label])
+text = "Initial rates of reaction:\n"
+text = text + "2.00 mol dm\u207b\u00b3: " + str(np.round(v2grad,2)) + " cm\u00b3s\u207b\u00b9\n"
+text = text + "1.00 mol dm\u207b\u00b3: " + str(np.round(v1grad,2)) + " cm\u00b3s\u207b\u00b9\n"
+text = text + "0.50 mol dm\u207b\u00b3: " + str(np.round(v05grad,2)) + " cm\u00b3s\u207b\u00b9"
+plt.text(55,20, text, ha='center', va='center', bbox=dict(boxstyle='round', fc='white', ec='grey'))
+plt.legend([v2Label + "\u207b\u00b3", v1Label + "\u207b\u00b3", v05Label + "\u207b\u00b3"])
 plt.grid()
+plt.savefig("/home/arch/Documents/Coding/Python/graphs/graph.pdf")
 plt.show()
 
 
